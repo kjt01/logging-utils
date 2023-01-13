@@ -1,6 +1,14 @@
 # logging-utils
 This is a library to simplify the logging using annotation.
 
+```
+    <dependency>
+        <groupId>com.kjt</groupId>
+        <artifactId>logging-utils</artifactId>
+        <version>1.0</version>
+    </dependency>
+```
+
 ## @LogRequestBody
 This annotation will log the annotated @RequestBody in the arguments
 

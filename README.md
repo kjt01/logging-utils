@@ -63,6 +63,18 @@ This annotation will log the annotated @RequestBody in the arguments
 
 ```
 
+## Correlation ID
+This will generate a unique UUID, if not present, to response header *(X-Correlation-Id)* which can be received or passed to downstream/upstream services. 
 
+##### Adding Correlation ID to logs
+Add `[%X{correlationId}]` in log pattern for logback config.
+```$xslt
+<property name="pattern" value="%magenta(%d{yyyy-MM-dd HH:mm:ss.SSS}) %green([%thread]) [%X{correlationId}] %highlight(%-5level) %yellow(%logger{36}.%M) - %msg%n" />
+```
+
+```$xslt
+2023-02-17 19:28:56.075 [http-nio-8144-exec-5] [56c9de9a-9e7e-42ad-a459-6be7506f4656] INFO  com.kjt.rop.config.Slf4jMDCFilter.logRequest - Request path: GET /restaurantonboardingservice/e04120fa-44e1-4044-bb27-59267149f8ba?type=RESTAURANT_INFO&name=RESTAURANT_DETAILS
+2023-02-17 19:28:56.081 [http-nio-8144-exec-5] [56c9de9a-9e7e-42ad-a459-6be7506f4656] INFO  c.k.rop.controllers.ScreenController.getInfo - Get details: RESTAURANT_DETAILS | rid: e04120fa-44e1-4044-bb27-59267149f8ba
+```
 
 

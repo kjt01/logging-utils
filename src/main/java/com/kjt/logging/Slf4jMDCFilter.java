@@ -5,6 +5,9 @@ import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -13,6 +16,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.UUID;
 
 @Data
@@ -23,6 +27,7 @@ public class Slf4jMDCFilter extends OncePerRequestFilter {
 
     private static final String CORRELATION_ID_HEADER_NAME = "X-Correlation-Id";
     private static final String CORRELATION_ID_LOG_VAR_NAME = "correlationId";
+    private static final String USERNAME_LOG_VAR_NAME = "username";
 
     @Override
     protected void doFilterInternal(final HttpServletRequest request,
@@ -31,7 +36,9 @@ public class Slf4jMDCFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         try {
             final String correlationId = getCorrelationIdFromHeader(request);
+            final String username = getCurrentUserLogin().orElse(null);
             MDC.put(CORRELATION_ID_LOG_VAR_NAME, correlationId);
+            MDC.put(USERNAME_LOG_VAR_NAME, username);
             logRequest(request);
             response.addHeader(CORRELATION_ID_HEADER_NAME, correlationId);
             filterChain.doFilter(request, response);
@@ -58,5 +65,19 @@ public class Slf4jMDCFilter extends OncePerRequestFilter {
         String queryString = request.getQueryString();
         String path = StringUtils.isBlank(queryString) ? uri : uri + "?" + queryString;
         log.info("Request path: {} {}", method, path);
+    }
+
+    public static Optional<String> getCurrentUserLogin() {
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        return Optional.ofNullable(securityContext.getAuthentication())
+                .map(authentication -> {
+                    if (authentication.getPrincipal() instanceof UserDetails) {
+                        UserDetails springSecurityUser = (UserDetails) authentication.getPrincipal();
+                        return springSecurityUser.getUsername();
+                    } else if (authentication.getPrincipal() instanceof String) {
+                        return (String) authentication.getPrincipal();
+                    }
+                    return null;
+                });
     }
 }

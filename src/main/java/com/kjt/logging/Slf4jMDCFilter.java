@@ -49,10 +49,7 @@ public class Slf4jMDCFilter extends OncePerRequestFilter {
 
     private String getCorrelationIdFromHeader(final HttpServletRequest request) {
         String correlationId = request.getHeader(CORRELATION_ID_HEADER_NAME);
-        if (StringUtils.isBlank(correlationId)) {
-            correlationId = generateUniqueCorrelationId();
-        }
-        return correlationId;
+        return StringUtils.isBlank(correlationId) ? generateUniqueCorrelationId() : correlationId;
     }
 
     private String generateUniqueCorrelationId() {
@@ -71,11 +68,12 @@ public class Slf4jMDCFilter extends OncePerRequestFilter {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         return Optional.ofNullable(securityContext.getAuthentication())
                 .map(authentication -> {
-                    if (authentication.getPrincipal() instanceof UserDetails) {
-                        UserDetails springSecurityUser = (UserDetails) authentication.getPrincipal();
-                        return springSecurityUser.getUsername();
-                    } else if (authentication.getPrincipal() instanceof String) {
-                        return (String) authentication.getPrincipal();
+                    Object principal = authentication.getPrincipal();
+                    if (principal instanceof UserDetails) {
+                        UserDetails userDetails = (UserDetails) principal;
+                        return userDetails.getUsername();
+                    } else if (principal instanceof String) {
+                        return (String) principal;
                     }
                     return null;
                 });
